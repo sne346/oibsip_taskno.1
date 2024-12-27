@@ -1,0 +1,78 @@
+# Task1:- Voice Assistant
+
+import speech_recognition as sr
+import pyttsx3
+import pywhatkit as kit
+import datetime
+import wikipedia
+
+# Initialize pyttsx3 for text-to-speech and voice type
+engine = pyttsx3.init('sapi5')
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[1].id)
+
+# Function to speak text
+def speak(text):
+    engine.say(text)
+    engine.runAndWait()
+
+# Function to take voice command and convert it to text
+def listen():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening...")
+        audio = recognizer.listen(source)
+        
+        try:
+            command = recognizer.recognize_google(audio)
+            print("You said: " + command)
+        except sr.UnknownValueError: 
+            print("Sorry, I could not understand.")
+            return None
+        except sr.RequestError:
+            print("Sorry, there was a problem with the speech service.")
+            return None
+        return command.lower()
+
+# Function to perform actions based on voice command
+def perform_action(command):
+    if 'play' in command:
+        song = command.replace('play', '')
+        speak(f'Playing {song}')
+        kit.playonyt(song)  # Search and play on YouTube
+    elif 'time' in command:
+        current_time = datetime.datetime.now().strftime('%H:%M:%S')
+        speak(f"The current time is {current_time}")
+    elif 'wikipedia' in command:
+        topic = command.replace('wikipedia', '')
+        speak(f'Searching Wikipedia for {topic}')
+        try:
+            result = wikipedia.summary(topic, sentences=2)
+            speak(result)
+        except wikipedia.exceptions.DisambiguationError as e:
+            speak(f'There are multiple results. Please be more specific. {e}')
+        except wikipedia.exceptions.HTTPTimeoutError:
+            speak("Sorry, there was an issue accessing Wikipedia.")
+    elif 'open' in command:
+        website = command.replace('open', '').strip()
+        speak(f'Opening {website}')
+        kit.search(f'open {website}')
+    elif 'hello' in command:
+        speak("Hello! User, How can I help you today?")
+    elif 'stop' in command or 'exit' in command:
+        speak("Goodbye!")
+        exit()
+    else:
+        speak("Sorry, I didn't understand that command.")
+
+# Main program loop
+def run_voice_assistant():
+    speak("Hello User, I am your voice assistant Dora. How can I help you?")
+    while True:
+        command = listen()
+        if command:
+            perform_action(command)
+
+# Run the assistant
+if __name__ == '__main__':
+    run_voice_assistant()
